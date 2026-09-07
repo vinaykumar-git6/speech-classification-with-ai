@@ -1,0 +1,23 @@
+{
+  "version": "2.0",
+  "extensions": {
+    "durableTask": {
+      "maxConcurrentActivityFunctions": 10,
+      "maxConcurrentOrchestratorFunctions": 20,
+      "storageProvider": {
+        "partitionCount": 4
+      }
+    },
+    "blobs": {
+      "maxDegreeOfParallelism": 4
+    }
+  },
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "excludedTypes": "Request"
+      }
+    }
+  }
+}

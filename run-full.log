@@ -1,0 +1,64 @@
+50 file(s) from samples\recordings -> samples\results on 8 worker(s)
+
+[  1/50] call-0002-cancellation.wav  cancellation (0.98)  transcribe 23.4s  classify 6.0s
+[  2/50] call-0008-cancellation.wav  cancellation (0.98)  transcribe 27.1s  classify 3.2s
+[  3/50] call-0007-complaint.wav  complaint (0.97)  transcribe 28.7s  classify 3.8s
+[  4/50] call-0004-service_request.wav  service_request (0.67)  transcribe 30.3s  classify 3.3s
+[  5/50] call-0001-complaint.wav  complaint (0.97)  transcribe 34.7s  classify 3.0s
+[  6/50] call-0006-other.wav  service_request (0.84)  transcribe 38.3s  classify 5.4s
+[  7/50] call-0005-fraud.wav  fraud (0.98)  transcribe 42.1s  classify 3.6s
+[  8/50] call-0003-sales.wav  sales (0.95)  transcribe 42.8s  classify 3.5s
+[  9/50] call-0009-sales.wav  sales (0.96)  transcribe 15.8s  classify 2.4s
+[ 10/50] call-0010-service_request.wav  service_request (0.95)  transcribe 16.8s  classify 3.3s
+[ 11/50] call-0012-other.wav  service_request (0.90)  transcribe 14.5s  classify 3.7s
+[ 12/50] call-0013-complaint.wav  complaint (0.89)  transcribe 14.9s  classify 3.4s
+[ 13/50] call-0011-fraud.wav  fraud (0.98)  transcribe 21.5s  classify 2.8s
+[ 14/50] call-0015-sales.wav  sales (0.90)  transcribe 14.4s  classify 2.7s
+[ 15/50] call-0014-cancellation.wav  cancellation (0.97)  transcribe 18.7s  classify 3.3s
+[ 16/50] call-0017-fraud.wav  fraud (0.98)  transcribe 15.8s  classify 3.2s
+[ 17/50] call-0016-service_request.wav  service_request (0.95)  transcribe 17.7s  classify 3.6s
+[ 18/50] call-0020-cancellation.wav  cancellation (0.98)  transcribe 12.0s  classify 2.7s
+[ 19/50] call-0018-other.wav  service_request (0.92)  transcribe 22.2s  classify 3.1s
+[ 20/50] call-0019-complaint.wav  complaint (0.96)  transcribe 21.0s  classify 3.3s
+[ 21/50] call-0022-service_request.wav  service_request (0.83)  transcribe 18.2s  classify 3.0s
+[ 22/50] call-0021-sales.wav  sales (0.96)  transcribe 24.2s  classify 3.4s
+[ 23/50] call-0025-complaint.wav  complaint (0.97)  transcribe 13.4s  classify 4.1s
+[ 24/50] call-0024-other.wav  service_request (0.80)  transcribe 16.7s  classify 3.5s
+[ 25/50] call-0023-fraud.wav  fraud (0.98)  transcribe 19.0s  classify 3.0s
+[ 26/50] call-0028-service_request.wav  service_request (0.91)  transcribe 14.3s  classify 3.0s
+[ 27/50] call-0026-cancellation.wav  cancellation (0.98)  transcribe 20.6s  classify 3.2s
+[ 28/50] call-0030-other.wav  service_request (0.78)  transcribe 14.1s  classify 3.9s
+[ 29/50] call-0029-fraud.wav  fraud (0.98)  transcribe 17.5s  classify 3.5s
+[ 30/50] call-0031-complaint.wav  complaint (0.89)  transcribe 19.2s  classify 3.6s
+[ 31/50] call-0035-fraud.wav  fraud (0.98)  transcribe 13.0s  classify 3.3s
+[ 32/50] call-0033-sales.wav  sales (0.97)  transcribe 20.8s  classify 3.5s
+[ 33/50] call-0032-cancellation.wav  cancellation (0.98)  transcribe 23.0s  classify 2.8s
+[ 34/50] call-0027-sales.wav  sales (0.96)  transcribe 36.9s  classify 2.9s
+[ 35/50] call-0034-service_request.wav  service_request (0.95)  transcribe 23.7s  classify 3.6s
+[ 36/50] call-0038-cancellation.wav  cancellation (0.98)  transcribe 10.8s  classify 3.3s
+[ 37/50] call-0036-other.wav  service_request (0.89)  transcribe 21.7s  classify 3.2s
+[ 38/50] call-0037-complaint.wav  complaint (0.90)  transcribe 19.6s  classify 3.7s
+[ 39/50] call-0039-sales.wav  sales (0.97)  transcribe 15.7s  classify 4.6s
+[ 40/50] call-0040-service_request.wav  service_request (0.93)  transcribe 21.8s  classify 3.2s
+[ 41/50] call-0041-fraud.wav  fraud (0.98)  transcribe 21.8s  classify 3.3s
+[ 42/50] call-0042-other.wav  service_request (0.88)  transcribe 19.1s  classify 3.3s
+[ 43/50] call-0044-cancellation.wav  cancellation (0.98)  transcribe 18.5s  classify 2.3s
+[ 44/50] call-0043-complaint.wav  complaint (0.95)  transcribe 19.5s  classify 3.1s
+[ 45/50] call-0045-sales.wav  sales (0.95)  transcribe 25.2s  classify 3.6s
+[ 46/50] call-0050-cancellation.wav  cancellation (0.98)  transcribe 18.5s  classify 2.6s
+[ 47/50] call-0046-service_request.wav  service_request (0.87)  transcribe 30.9s  classify 4.1s
+[ 48/50] call-0049-complaint.wav  complaint (0.95)  transcribe 24.0s  classify 3.8s
+[ 49/50] call-0048-other.wav  service_request (0.83)  transcribe 27.2s  classify 3.0s
+[ 50/50] call-0047-fraud.wav  fraud (0.98)  transcribe 32.1s  classify 4.1s
+
+--------------------------------------------------------------------
+processed         50 ok, 0 failed, 8 worker(s)
+wall clock        167.6s
+audio processed   255.3 min
+service time      1264.9s summed across threads
+speedup           7.5x versus serial
+per recording     3.4s wall, 25.3s service
+realtime factor   91.4x audio per second
+split             transcribe 86%, classify 14%
+categories        cancellation 9, complaint 9, fraud 8, sales 8, service_request 16
+human review      9

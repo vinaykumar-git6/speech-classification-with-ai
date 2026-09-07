@@ -1,0 +1,17 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "STORAGE_ACCOUNT_URL": "https://<account>.blob.core.windows.net",
+    "INPUT_CONTAINER": "recordings",
+    "OUTPUT_CONTAINER": "results",
+    "SPEECH_ENDPOINT": "https://<foundry-resource>.cognitiveservices.azure.com",
+    "SPEECH_API_VERSION": "2025-10-15",
+    "AZURE_OPENAI_ENDPOINT": "https://<foundry-resource>.services.ai.azure.com/openai/v1",
+    "AZURE_OPENAI_DEPLOYMENT": "gpt-5-mini",
+    "CLASSIFICATION_CATEGORIES": "complaint,cancellation,sales,service_request,fraud,other",
+    "DEFAULT_LOCALE": "en-US",
+    "SPEECH_TIMEOUT_SECONDS": "600"
+  }
+}

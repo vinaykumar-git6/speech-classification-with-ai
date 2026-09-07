@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+local.settings.json
+.env
+dist/
+build/
+*.egg-info/
+.azure/
+
+# Generated test audio (see scripts/New-SampleRecordings.ps1) - large binaries.
+samples/
+*.wav

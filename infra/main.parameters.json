@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "dev"
+    },
+    "location": {
+      "value": "swedencentral"
+    },
+    "openAIModelName": {
+      "value": "gpt-5-mini"
+    },
+    "openAIModelVersion": {
+      "value": "2025-08-07"
+    },
+    "openAICapacity": {
+      "value": 10
+    }
+  }
+}
