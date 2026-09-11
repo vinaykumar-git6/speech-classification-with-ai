@@ -1,0 +1,84 @@
+---
+title: Audio Intelligence on Databricks Data Intelligence Platform - Vision
+---
+flowchart LR
+    classDef source fill:#f7f7f5,stroke:#555555,stroke-width:1px,color:#222222
+    classDef azure fill:#e6f2fb,stroke:#0f6cbd,stroke-width:1px,color:#0b3d63
+    classDef ai fill:#f3eafc,stroke:#7b3fbf,stroke-width:1px,color:#432069
+    classDef data fill:#fff4e5,stroke:#b26a00,stroke-width:1px,color:#6b3f00
+    classDef insight fill:#eef7ee,stroke:#2e7d32,stroke-width:1px,color:#1b4d20
+    classDef control fill:#fdeaea,stroke:#c62828,stroke-width:1px,color:#7f1d1d
+
+    subgraph EXPERIENCE["1 - Customer and Colleague Experience"]
+        direction TB
+        CALLS["Customer call recordings<br/>contact center and approved channels"]:::source
+        REVIEW["Human review workbench<br/>low confidence, safety, compliance"]:::control
+        ACTIONS["Business actions<br/>service recovery, retention, sales,<br/>fraud and quality coaching"]:::insight
+    end
+
+    subgraph AZURE["2 - Event-driven Audio Intelligence"]
+        direction TB
+        ADLSIN[("ADLS Gen2<br/>recordings / raw audio")]:::data
+        EVENT["Event Grid<br/>BlobCreated"]:::azure
+        FUNC["Durable Azure Functions<br/>idempotent orchestration and retry"]:::azure
+        SPEECH["Azure AI Speech<br/>fast transcription"]:::ai
+        AOAI["Azure OpenAI<br/>structured classification,<br/>summary and rationale"]:::ai
+        ADLSOUT[("ADLS Gen2<br/>classified JSON + source ETag")]:::data
+    end
+
+    subgraph DATAIQ["3 - Databricks Data Intelligence Platform"]
+        direction TB
+        INGEST["Auto Loader / Lakeflow<br/>incremental governed ingestion"]:::azure
+
+        subgraph LAKEHOUSE["Lakehouse - Delta Lake medallion architecture"]
+            direction LR
+            BRONZE[("Bronze<br/>immutable transcript and<br/>classification records")]:::data
+            SILVER[("Silver<br/>validated, deduplicated and<br/>PII-controlled call intelligence")]:::data
+            GOLD[("Gold<br/>customer themes, trends,<br/>KPIs and action-ready signals")]:::data
+        end
+
+        UC["Unity Catalog<br/>catalog, lineage, RBAC,<br/>row/column controls and audit"]:::control
+        DQ["Data quality and monitoring<br/>schema expectations, drift,<br/>freshness and model quality"]:::control
+        MLSERVING["Mosaic AI / MLflow<br/>evaluation, prompt and model tracking,<br/>optional custom intelligence models"]:::ai
+    end
+
+    subgraph CONSUME["4 - Intelligence Products and Outcomes"]
+        direction TB
+        AIBI["Databricks AI/BI<br/>dashboards and Genie spaces"]:::insight
+        POWERBI["Power BI<br/>executive and operational reporting"]:::insight
+        APPS["Operational applications<br/>APIs, alerts and workflow integration"]:::insight
+        ANALYSTS["Data science and analysts<br/>SQL, notebooks and governed features"]:::insight
+    end
+
+    subgraph FOUNDATION["Cross-cutting Trust and Operations - applies to every layer above"]
+        direction LR
+        ID["Microsoft Entra ID and managed identity<br/>keyless service-to-service access"]:::azure
+        NET["Private networking and data boundaries<br/>regional residency and approved egress"]:::control
+        OBS["Application Insights, Azure Monitor<br/>and Databricks system tables"]:::azure
+        GOV["Purview and responsible AI controls<br/>consent, retention, classification,<br/>evaluation and audit evidence"]:::control
+    end
+
+    CALLS -->|"consented audio"| ADLSIN
+    ADLSIN --> EVENT --> FUNC
+    FUNC --> SPEECH
+    SPEECH -->|"transcript"| FUNC
+    FUNC --> AOAI
+    AOAI -->|"strict classification object"| FUNC
+    FUNC -->|"deterministic result"| ADLSOUT
+
+    ADLSOUT --> INGEST --> BRONZE --> SILVER --> GOLD
+    UC -.->|"governs"| INGEST
+    UC -.->|"governs"| LAKEHOUSE
+    DQ -.->|"validates"| LAKEHOUSE
+    SILVER <--> MLSERVING
+
+    GOLD --> AIBI
+    GOLD --> POWERBI
+    GOLD --> APPS
+    SILVER --> ANALYSTS
+    GOLD -->|"confidence and policy rules"| REVIEW
+    REVIEW -->|"approved correction and feedback"| SILVER
+    AIBI --> ACTIONS
+    POWERBI --> ACTIONS
+    APPS --> ACTIONS
+    REVIEW --> ACTIONS

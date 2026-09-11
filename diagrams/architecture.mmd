@@ -1,0 +1,81 @@
+---
+title: Audio Intelligence Pipeline - Architecture
+---
+flowchart TB
+    classDef azure fill:#e6f2fb,stroke:#0f6cbd,stroke-width:1px,color:#0b3d63
+    classDef code fill:#eef7ee,stroke:#2e7d32,stroke-width:1px,color:#1b4d20
+    classDef store fill:#fff4e5,stroke:#b26a00,stroke-width:1px,color:#6b3f00
+    classDef ext fill:#f3eafc,stroke:#7b3fbf,stroke-width:1px,color:#432069
+
+    OP["Operator<br/>scripts/upload-recordings.ps1"]:::ext
+
+    subgraph STORAGE["Azure Storage - ADLS Gen2 - HNS enabled, shared key disabled"]
+        REC[("recordings container<br/>INPUT_CONTAINER")]:::store
+        RES[("results container<br/>classified/&lt;recording_id&gt;.json<br/>metadata: source_etag")]:::store
+        DTS[("Durable Task provider<br/>control queues + history tables<br/>partitionCount 4")]:::store
+        DEP[("deployments container<br/>Flex Consumption package")]:::store
+    end
+
+    EG["Event Grid<br/>Microsoft.Storage.BlobCreated"]:::azure
+
+    subgraph FUNC["Function App - Flex Consumption FC1, Python 3.11, max 10 instances"]
+        BT["recording_uploaded<br/>@blob_trigger source=EVENT_GRID<br/>@durable_client_input"]:::code
+        ORCH["audio_orchestrator<br/>@orchestration_trigger<br/>instance_id = audio-&lt;recording_id&gt;"]:::code
+
+        subgraph ACTS["Activities - maxConcurrentActivityFunctions 10"]
+            A1["result_exists"]:::code
+            A2["transcribe_recording"]:::code
+            A3["classify_transcript"]:::code
+            A4["store_result"]:::code
+        end
+
+        subgraph LIB["src/audio_pipeline"]
+            CFG["config.Settings.from_env"]:::code
+            SVC["services.PipelineServices"]:::code
+            SPC["speech.SpeechClient<br/>httpx + bounded retry"]:::code
+            SCH["schemas<br/>RecordingMessage / TranscriptDocument<br/>ClassificationDocument / ResultDocument<br/>extra=forbid"]:::code
+        end
+    end
+
+    MI["User-assigned Managed Identity<br/>DefaultAzureCredential"]:::azure
+    SPEECH["Azure AI Speech<br/>POST /speechtotext/transcriptions:transcribe<br/>fast transcription, local auth disabled"]:::azure
+    AOAI["Azure OpenAI<br/>gpt-5-mini GlobalStandard<br/>structured output parse"]:::azure
+    AI["Application Insights<br/>+ Log Analytics 30d"]:::azure
+
+    ADF["Azure Data Factory<br/>JSON dataset on results/classified"]:::ext
+    DBX["Azure Databricks<br/>Delta MERGE on recording_id + etag"]:::ext
+
+    OP -->|"upload audio, no overwrite"| REC
+    REC -->|"BlobCreated event"| EG
+    EG --> BT
+    BT -->|"sha256 name:etag -> recording_id<br/>get_status then start_new"| ORCH
+    ORCH <-->|"state, replay, checkpoints"| DTS
+
+    ORCH -->|"1"| A1
+    ORCH -->|"2"| A2
+    ORCH -->|"3"| A3
+    ORCH -->|"4"| A4
+
+    A1 --> SVC
+    A2 --> SVC
+    A3 --> SVC
+    A4 --> SVC
+    SVC --> CFG
+    SVC --> SCH
+    SVC --> SPC
+
+    A1 -.->|"head classified blob<br/>compare source_etag"| RES
+    SVC -->|"download_blob().readall()"| REC
+    SPC -->|"multipart audio + definition JSON"| SPEECH
+    SVC -->|"beta.chat.completions.parse<br/>response_format=ClassificationDocument"| AOAI
+    A4 -->|"upload_blob overwrite=true<br/>metadata source_etag"| RES
+
+    MI -.->|"Blob Data Owner/Contributor<br/>Queue + Table Contributor"| STORAGE
+    MI -.->|"Cognitive Services User"| SPEECH
+    MI -.->|"Cognitive Services OpenAI User"| AOAI
+    MI -.->|"Monitoring Metrics Publisher"| AI
+    DEP -.->|"identity-based deployment"| FUNC
+
+    FUNC -.->|"traces, failures, duration"| AI
+    RES --> ADF
+    RES --> DBX

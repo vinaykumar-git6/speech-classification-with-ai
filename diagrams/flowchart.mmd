@@ -1,0 +1,73 @@
+---
+title: Audio Intelligence Pipeline - Processing and Failure Flow
+---
+flowchart TD
+    classDef start fill:#e6f2fb,stroke:#0f6cbd,color:#0b3d63
+    classDef decide fill:#fff4e5,stroke:#b26a00,color:#6b3f00
+    classDef work fill:#eef7ee,stroke:#2e7d32,color:#1b4d20
+    classDef stop fill:#fdeaea,stroke:#c62828,color:#7f1d1d
+    classDef done fill:#e8f5e9,stroke:#1b5e20,color:#14401a
+
+    S(["Blob uploaded to recordings container"]):::start
+    ID["recording_id = sha256 of blob_name + etag, first 32 chars<br/>instance_id = audio-&lt;recording_id&gt;"]:::work
+    GS{"get_status(instance_id)<br/>running or pending?"}:::decide
+    SKIP(["Skip - orchestration already owns this blob"]):::done
+    NEW["start_new audio_orchestrator"]:::work
+
+    RE{"result_exists?<br/>classified/&lt;id&gt;.json present AND<br/>metadata.source_etag == blob etag"}:::decide
+    ALREADY(["Return status = already_processed"]):::done
+
+    DL["Download audio with managed identity"]:::work
+    EMPTY{"audio empty?"}:::decide
+    SIZE{"audio &gt; 250 MB?<br/>fast transcription limit"}:::decide
+
+    POST["POST /speechtotext/transcriptions:transcribe<br/>multipart audio + definition, profanity Masked"]:::work
+    HTTP{"status 429 / 500 / 502 / 503 / 504?"}:::decide
+    RETRY{"attempt &lt; 6?"}:::decide
+    WAIT["sleep retry-after, else backoff 1s doubling to 30s"]:::work
+    TEXT{"combinedPhrases produced text?"}:::decide
+    TDOC["Build TranscriptDocument<br/>text + duration_milliseconds"]:::work
+
+    CLS["beta.chat.completions.parse<br/>response_format = ClassificationDocument"]:::work
+    REF{"model refusal?"}:::decide
+    PAR{"parsed is None?"}:::decide
+    CAT{"category in CLASSIFICATION_CATEGORIES?"}:::decide
+
+    RDOC["Build ResultDocument<br/>schema_version, recording, transcript,<br/>classification, processed_at UTC"]:::work
+    UP["upload_blob overwrite=true<br/>metadata source_etag, content-type application/json"]:::work
+    OK(["Return status = completed + result_url"]):::done
+    HR{"requires_human_review true?<br/>confidence &lt; 0.75, ambiguous,<br/>safety or compliance"}:::decide
+    REVIEW(["Flagged in result JSON for human review"]):::done
+    DOWN(["ADF / Databricks incremental ingest"]):::done
+
+    ERRS(["SpeechError - activity fails,<br/>Durable records failed orchestration"]):::stop
+    ERRC(["RuntimeError - classification rejected,<br/>activity fails"]):::stop
+
+    S --> ID --> GS
+    GS -- yes --> SKIP
+    GS -- "no, or terminal status" --> NEW --> RE
+    RE -- yes --> ALREADY
+    RE -- no --> DL --> EMPTY
+    EMPTY -- yes --> ERRS
+    EMPTY -- no --> SIZE
+    SIZE -- yes --> ERRS
+    SIZE -- no --> POST --> HTTP
+    HTTP -- yes --> RETRY
+    RETRY -- yes --> WAIT --> POST
+    RETRY -- no --> ERRS
+    HTTP -- no --> TEXT
+    TEXT -- no --> ERRS
+    TEXT -- yes --> TDOC --> CLS --> REF
+    REF -- yes --> ERRC
+    REF -- no --> PAR
+    PAR -- yes --> ERRC
+    PAR -- no --> CAT
+    CAT -- no --> ERRC
+    CAT -- yes --> RDOC --> UP --> OK
+    OK --> HR
+    HR -- yes --> REVIEW
+    HR -- no --> DOWN
+    REVIEW --> DOWN
+
+    ERRS -.->|"fix source or config, then re-upload<br/>new etag = new recording_id"| S
+    ERRC -.->|"fix categories or prompt, then replay"| S

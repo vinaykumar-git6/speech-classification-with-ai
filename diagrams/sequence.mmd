@@ -1,0 +1,74 @@
+---
+title: Audio Intelligence Pipeline - Sequence
+---
+sequenceDiagram
+    autonumber
+    actor OP as Operator
+    participant REC as ADLS recordings
+    participant EG as Event Grid
+    participant BT as recording_uploaded<br/>blob trigger
+    participant DC as Durable client
+    participant OR as audio_orchestrator
+    participant AC as Activities
+    participant SV as PipelineServices
+    participant SP as Azure AI Speech
+    participant AO as Azure OpenAI
+    participant RES as ADLS results
+
+    OP->>REC: upload call recording
+    REC-->>EG: BlobCreated
+    EG->>BT: InputStream + blob.properties.etag
+
+    BT->>BT: recording_id = sha256("name:etag")[:32]
+    BT->>BT: build RecordingMessage<br/>container, blob_name, etag, locale
+    BT->>DC: get_status("audio-" + recording_id)
+
+    alt instance running or pending
+        DC-->>BT: RUNNING / PENDING
+        Note over BT: skip, another orchestration owns this blob
+    else no instance, or COMPLETED / FAILED / TERMINATED
+        DC-->>BT: None or terminal status
+        BT->>OR: start_new("audio_orchestrator", instance_id, message)
+
+        OR->>AC: call_activity result_exists
+        AC->>SV: result_exists(RecordingMessage)
+        SV->>RES: exists("classified/<id>.json") + get_blob_properties
+        RES-->>SV: metadata.source_etag
+        SV-->>OR: true / false
+
+        alt already processed, same source etag
+            OR-->>DC: {status: already_processed}
+        else new or changed recording
+            OR->>AC: call_activity transcribe_recording
+            AC->>SV: transcribe(RecordingMessage)
+            SV->>REC: download_blob().readall()
+            REC-->>SV: audio bytes
+            SV->>SV: guard empty audio and 250 MB limit
+
+            loop up to 6 attempts, exponential backoff capped at 30s
+                SV->>SP: POST /speechtotext/transcriptions:transcribe<br/>multipart audio + definition JSON
+                alt 429 or 5xx
+                    SP-->>SV: throttled / transient error + retry-after
+                else success
+                    SP-->>SV: combinedPhrases + durationMilliseconds
+                end
+            end
+            SV-->>OR: TranscriptDocument
+
+            OR->>AC: call_activity classify_transcript
+            AC->>SV: classify(TranscriptDocument)
+            SV->>AO: beta.chat.completions.parse<br/>model=AZURE_OPENAI_DEPLOYMENT<br/>response_format=ClassificationDocument
+            AO-->>SV: parsed ClassificationDocument
+            SV->>SV: reject refusal, unparsed, or category<br/>outside CLASSIFICATION_CATEGORIES
+            SV-->>OR: ClassificationDocument
+
+            OR->>AC: call_activity store_result
+            AC->>SV: save_result(ResultDocument)
+            SV->>RES: upload_blob overwrite=true<br/>metadata source_etag, application/json
+            RES-->>SV: blob url
+            SV-->>OR: result_url
+            OR-->>DC: {status: completed, recording_id, result_url}
+        end
+    end
+
+    Note over RES: ADF / Databricks read results/classified<br/>merge on recording_id, change token = etag
